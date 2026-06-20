@@ -1,114 +1,152 @@
-# 📄 GİB e-Arşiv MCP Sunucusu
+# 📄 GİB e-Arşiv MCP Server
+
+> 🇹🇷 *Türkiye Gelir İdaresi Başkanlığı (GİB) e-Arşiv Portalı için FastMCP tabanlı MCP sunucusu*
+> 🇬🇧 *FastMCP-based MCP server for the Turkish Revenue Administration (GİB) e-Arşiv Portal*
 
 Bu proje, Gelir İdaresi Başkanlığı (GİB) e-Arşiv Portalına entegre olarak çalışan ve yapay zeka asistanları (Claude, vb.) için [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) araçları sağlayan bir Python sunucusudur.
 
+*This project is a Python server that integrates with the Turkish Revenue Administration (GİB) e-Arşiv Portal and provides [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) tools for AI assistants (Claude, etc.).*
+
 Sunucu sayesinde; GİB portalı üzerinden otomatik fatura taslakları oluşturabilir, faturaları iptal edebilir, SMS ile imzalama süreçlerini yönetebilir ve PDF olarak faturayı indirebilirsiniz.
 
-## 🚀 Özellikler ve Araçlar (Tools)
+*With this server, you can: create e-invoice drafts, cancel invoices, manage SMS-based signing workflows, and download invoices as PDF — all through the GİB portal.*
 
-Aşağıdaki araçlar MCP üzerinden kullanılabilir durumdadır:
+---
 
-*   **`gib_earsiv_ping`**: Kimlik doğrulama testi (token kontrolü).
-*   **`gib_earsiv_kullanici_bilgileri_getir`**: Mükellef (Satıcı) profil bilgilerini getirir.
-*   **`gib_earsiv_menu_getir`**: Portal menülerini listeler.
-*   **`gib_earsiv_taslaklari_getir`**: Belirtilen tarih aralığındaki taslak faturaları listeler.
-*   **`gib_earsiv_imza_bekleyenler`**: SMS ile imzalanmayı bekleyen onaylanmamış faturaları listeler.
-*   **`gib_earsiv_adima_kesilen_belgeler`**: Adıma (VKN/TCKN) kesilen e-Arşiv faturalarını listeler.
-*   **`gib_earsiv_fatura_olustur`**: Yeni bir e-Arşiv fatura taslağı oluşturur. GİB tarafından otomatik ETTN atanır.
-*   **`gib_earsiv_fatura_sil`**: Taslak durumundaki (henüz imzalanmamış) faturayı iptal eder/siler.
-*   **`gib_earsiv_fatura_goster`**: Faturanın HTML önizlemesini getirir.
-*   **`gib_earsiv_fatura_pdf_indir`**: Faturayı PDF formatına dönüştürüp Base64 formatında indirir.
-*   **`gib_earsiv_belge_indir`**: Faturayı orijinal GİB formatında ZIP olarak indirir.
-*   **`gib_earsiv_sicil_sorgula`**: VKN/TCKN üzerinden alıcı şirket/şahıs bilgilerini sorgular.
-*   **`gib_earsiv_sms_sorgula`**: Mükellefin sistemde kayıtlı GSM numarasını sorgular.
-*   **`gib_earsiv_sms_gonder`**: Kayıtlı GSM numarasına fatura imzalama için onay kodu (OTP SMS) gönderir.
-*   **`gib_earsiv_sms_onayla`**: Telefona gelen 6 haneli kod ile taslak halindeki faturayı imzalar (resmileştirir).
+## 🚀 Tools / Araçlar
 
-## 🛠️ Kurulum ve Çalıştırma
+*All tools are available via MCP. Each tool name follows the `gib_earsiv_` prefix convention.*
 
-Proje paket yönetimi için [uv](https://github.com/astral-sh/uv) kullanmaktadır. PDF üretimi için `weasyprint` kütüphanesinden faydalanılır.
+| Tool | Description (EN) | Açıklama (TR) |
+|------|-------------------|---------------|
+| `gib_earsiv_ping` | Authentication check (token validation) | Kimlik doğrulama testi (token kontrolü) |
+| `gib_earsiv_kullanici_bilgileri_getir` | Get taxpayer (seller) profile info | Mükellef (Satıcı) profil bilgilerini getirir |
+| `gib_earsiv_menu_getir` | List portal menus | Portal menülerini listeler |
+| `gib_earsiv_taslaklari_getir` | List draft invoices by date range | Belirtilen tarih aralığındaki taslak faturaları listeler |
+| `gib_earsiv_imza_bekleyenler` | List invoices pending SMS signature | SMS ile imzalanmayı bekleyen onaylanmamış faturaları listeler |
+| `gib_earsiv_adima_kesilen_belgeler` | List invoices issued to me (VKN/TCKN) | Adıma kesilen e-Arşiv faturalarını listeler |
+| `gib_earsiv_fatura_olustur` | Create a new e-invoice draft (auto ETTN) | Yeni e-Arşiv fatura taslağı oluşturur (otomatik ETTN) |
+| `gib_earsiv_fatura_sil` | Delete/cancel a draft invoice | Taslak faturayı iptal eder/siler |
+| `gib_earsiv_fatura_goster` | View invoice as HTML preview | Faturanın HTML önizlemesini getirir |
+| `gib_earsiv_fatura_pdf_indir` | Download invoice as Base64-encoded PDF | Faturayı PDF olarak Base64 formatında indirir |
+| `gib_earsiv_belge_indir` | Download original GİB ZIP file | Faturayı orijinal GİB formatında ZIP olarak indirir |
+| `gib_earsiv_sicil_sorgula` | Look up taxpayer info by VKN/TCKN | VKN/TCKN ile alıcı şirket/şahıs bilgilerini sorgular |
+| `gib_earsiv_sms_sorgula` | Query registered GSM number | Sistemde kayıtlı GSM numarasını sorgular |
+| `gib_earsiv_sms_gonder` | Send OTP SMS for invoice signing | İmzalama için onay kodu (OTP SMS) gönderir |
+| `gib_earsiv_sms_onayla` | Confirm OTP and sign the invoice | 6 haneli kod ile faturayı imzalar (resmileştirir) |
 
-1. Bağımlılıkları kurun:
+---
+
+## 🛠️ Installation / Kurulum
+
+*This project uses [uv](https://github.com/astral-sh/uv) for package management and `weasyprint` for PDF generation.*
+
+### 1. Install dependencies / Bağımlılıkları kurun
+
 ```bash
 uv sync
 ```
 
-2. `.env` dosyasını `.env.example`'dan kopyalayıp kimlik bilgilerinizi girin:
+### 2. Configure credentials / Kimlik bilgilerini yapılandırın
+
+*Copy `.env.example` to `.env` and fill in your GİB credentials:*
+
 ```env
 GIB_ENV=production
-GIB_USERNAME=vergi_no_veya_kullanici_kodu
-GIB_PASSWORD=sifre
+GIB_USERNAME=your_tax_id_or_username
+GIB_PASSWORD=your_password
 ```
 
-### Ortam Modları (GIB_ENV)
+### Environment Modes / Ortam Modları
 
-| Değer | Açıklama |
-|-------|----------|
-| `mock` | Testler ve geliştirme için — gerçek GİB bağlantısı yapmaz, önceden tanımlı yanıtlar döner |
-| `test` | GİB test ortamı (`earsivportaltest.efatura.gov.tr`) |
-| `production` | Canlı GİB ortamı (`earsivportal.efatura.gov.tr`) — **gerçek kimlik bilgileri gerekli** |
+| Mode | Description (EN) | Açıklama (TR) |
+|------|-------------------|---------------|
+| `mock` | No real GİB connection — returns predefined responses (for dev/testing) | Gerçek GİB bağlantısı yapmaz, önceden tanımlı yanıtlar döner (geliştirme/test) |
+| `test` | GİB test environment (`earsivportaltest.efatura.gov.tr`) | GİB test ortamı |
+| `production` | Live GİB environment (`earsivportal.efatura.gov.tr`) — **real credentials required** | Canlı GİB ortamı — **gerçek kimlik bilgileri gerekli** |
 
-3. MCP Sunucusunu başlatın (Claude Desktop veya diğer istemciler config dosyanızdan otomatik başlatacaktır):
+### 3. Start the server / Sunucuyu başlatın
+
 ```bash
 uv run gib-mcp
 ```
 
+> ⚠️ `main.py` is a stub — the real entry point is the `gib-mcp` CLI command.
 > ⚠️ `main.py` sadece stub'tır — gerçek giriş noktası `gib-mcp` CLI komutudur.
 
-### Testleri Çalıştırma
+---
+
+## 🧪 Testing / Testler
 
 ```bash
-uv run pytest                    # Tüm testleri çalıştır (otomatik GIB_ENV=mock)
-uv run pytest -k "imza"          # İmza bekleyenler testini çalıştır
-uv run pytest -k "fatura"        # Fatura testlerini çalıştır
-uv run pytest -v                 # Detaylı çıktı ile
+uv run pytest                    # Run all tests (auto GIB_ENV=mock)
+uv run pytest -k "imza"          # Run signature-related tests
+uv run pytest -k "fatura"        # Run invoice-related tests
+uv run pytest -v                 # Verbose output
 ```
 
-### Derleme
+---
+
+## 📦 Build / Derleme
 
 ```bash
-uv build                         # wheel oluşturur (hatchling)
+uv build                         # Build wheel (hatchling)
 ```
 
-## 🔄 Örnek Akış: Fatura Oluşturma ve İmzalama
+---
 
-Sistemin uçtan uca çalışması için izlenmesi gereken doğru akış:
+## 🔄 Example Flow: Invoice Creation & Signing / Fatura Oluşturma ve İmzalama
 
-1. **Taslak Oluşturma:** `gib_earsiv_fatura_olustur` aracı çağrılır. (Not: `faturaUuid` boş bırakılmalı, GİB otomatik ETTN üretecektir).
-2. **Kayıtlı Telefonu Sorgulama:** `gib_earsiv_sms_sorgula` ile sistemdeki cep telefonu numarası çekilir.
-3. **SMS Gönderimi:** `gib_earsiv_sms_gonder` çağrılır. Sistem telefona kod iletir ve bir `OID` (Operation ID) döner.
-4. **SMS Onayı (İmzalama):** Kullanıcıdan alınan 6 haneli kod, OID ve Fatura ETTN'si ile `gib_earsiv_sms_onayla` çağrılır. İşlem başarılı ise fatura "Onaylandı" statüsüne geçer.
+1. **Create Draft:** Call `gib_earsiv_fatura_olustur`. (*Leave `faturaUuid` empty — GİB auto-assigns ETTN.*)
+2. **Query Phone:** Call `gib_earsiv_sms_sorgula` to get the registered phone number.
+3. **Send SMS:** Call `gib_earsiv_sms_gonder`. Returns an `OID` (Operation ID).
+4. **Confirm & Sign:** Call `gib_earsiv_sms_onayla` with the 6-digit OTP, OID, and invoice ETTN. Status changes to "Onaylandı" (Approved).
 
-## 💡 Geliştirici Notları ve Çözülen GİB Sorunları
+---
 
-GİB e-Arşiv portalının kendine has bazı arka plan davranışları projede çözülmüştür. Kodu geliştireceklerin dikkatine:
+## 💡 Developer Notes / Geliştirici Notları
 
-*   **Karakter Bozulmaları (Encoding):** GİB sistemine JSON verisi gönderilirken Türkçe karakterlerin bozulup `GÃ¼ltepe` gibi görünmesini önlemek için, HTTP payload'larında `json.dumps(..., ensure_ascii=True)` kullanılmalıdır. GİB, ASCII-safe `\uXXXX` kaçış dizilerini doğru işlemektedir.
-*   **SMS Gönderme (NullPointerException) Hatası:** `EARSIV_PORTAL_SMSSIFRE_GONDER` komutunu çalıştırmadan hemen önce aynı session içinde MUTLAKA `EARSIV_PORTAL_TELEFONNO_SORGULA` komutu çalıştırılmalıdır. Aksi halde GİB sunucuları Java NullPointerException döndürür. Bu adım `gib_earsiv_sms_gonder` aracının içine entegre edilmiştir.
-*   **ETTN Hatası:** Yeni fatura oluşturulurken `faturaUuid` alanına geçerli bir UUID dahi yazılsa GİB "Ettn sınırına uymuyor" hatası verebilmektedir. Çözüm, bu alanı boş string (`""`) olarak göndermektir.
-*   **Fatura Silme:** `EARSIV_PORTAL_FATURA_SIL` işleminde silinecekler listesindeki anahtar `belgeNo` değil, **`belgeNumarasi`** olmalıdır ve `pageName` olarak `RG_TASLAKLAR` kullanılmalıdır. Ayrıca iptal işlemi için siparişin detaylı verisi sunulmalıdır.
+*Known GİB Portal quirks and workarounds — must-read before modifying code:*
 
-## 📁 Proje Yapısı
+### Encoding / Karakter Bozulmaları
+> GİB breaks on UTF-8 Turkish characters. Always use `json.dumps(..., ensure_ascii=True)` in HTTP payloads. GİB correctly handles `\uXXXX` escape sequences.
+
+### SMS NullPointerException
+> **Always** call `EARSIV_PORTAL_TELEFONNO_SORGULA` before `EARSIV_PORTAL_SMSSIFRE_GONDER`. Otherwise GİB throws a Java `NullPointerException`. This step is already integrated into `gib_earsiv_sms_gonder`.
+
+### ETTN Error
+> When creating invoices, pass `faturaUuid` as an empty string `""`. GİB rejects valid UUIDs with "Ettn sınırına uymuyor".
+
+### Invoice Deletion
+> Use `belgeNumarasi` (NOT `belgeNo`) as the key in the delete list. `pageName` must be `RG_TASLAKLAR`. Include full order details for cancellation.
+
+---
+
+## 📁 Project Structure / Proje Yapısı
 
 ```
 arsiv-fatura/
-├── pyproject.toml              # Proje yapılandırması (hatchling + uv)
+├── pyproject.toml              # Project config (hatchling + uv)
 ├── src/gib_earsiv_mcp/
-│   ├── server.py               # FastMCP sunucu + middleware
-│   ├── tools.py                # Tüm MCP araç tanımları (15 araç)
-│   ├── core/                   # İş mantığı katmanı
-│   │   ├── client.py           # GİB HTTP istemcisi
-│   │   ├── mock_client.py      # Testler için mock istemci
-│   │   ├── session.py          # Oturum ve token yönetimi
-│   │   ├── config.py           # Ortam ayarları (pydantic-settings)
-│   │   └── exceptions.py       # Özel hata sınıfları
-│   └── models/                 # Veri modelleri
-│       └── input.py            # Tüm MCP araç giriş modelleri (Pydantic)
-└── tests/                      # Testler (pytest + pytest-asyncio)
-    ├── conftest.py             # GIB_ENV=mock ayarı
-    └── test_phase*.py          # Aşamalı test dosyaları
+│   ├── server.py               # FastMCP server + middleware (rate-limit, retry, error handling)
+│   ├── tools.py                # All 15 MCP tool definitions
+│   ├── core/                   # Business logic layer
+│   │   ├── client.py           # GİB HTTP client (login, dispatch, download)
+│   │   ├── mock_client.py      # Mock client for offline testing
+│   │   ├── session.py          # Session & token management
+│   │   ├── config.py           # Environment settings (pydantic-settings)
+│   │   └── exceptions.py       # Custom exception hierarchy
+│   └── models/                 # Data models
+│       └── input.py            # Pydantic input models for all tools
+└── tests/                      # Tests (pytest + pytest-asyncio)
+    ├── conftest.py             # Sets GIB_ENV=mock for all tests
+    └── test_phase*.py          # Phase-based test files
 ```
 
-## 🔗 Geliştirici Dokümantasyonu
+---
 
-Detaylı kod haritası, anti-pattern'ler ve geliştirme rehberi için [`AGENTS.md`](AGENTS.md) dosyasına bakın.
+## 🔗 Developer Documentation / Geliştirici Dokümantasyonu
+
+*For detailed code map, anti-patterns, conventions, and development guide, see:*
+
+→ **[`AGENTS.md`](AGENTS.md)** ←
