@@ -10,3 +10,9 @@ wheels/
 .venv
 .env
 *.pdf
+
+# Test artifacts
+.pytest_cache/
+
+# AI session data (not documentation)
+.sisyphus/run-continuation/
