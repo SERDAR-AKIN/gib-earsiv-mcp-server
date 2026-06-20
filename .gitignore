@@ -14,5 +14,5 @@ wheels/
 # Test artifacts
 .pytest_cache/
 
-# AI session data (not documentation)
-.sisyphus/run-continuation/
+# AI agent infrastructure (plans, sessions, workflow data)
+.sisyphus/
