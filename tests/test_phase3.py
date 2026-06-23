@@ -27,25 +27,25 @@ async def test_fatura_olustur():
                 }
             ]
         }
-        result = await client.call_tool("gib_earsiv_fatura_olustur", {"params": payload})
+        result = await client.call_tool("gib_earsiv_fatura_olustur", payload)
         assert result.is_error is False
         assert "başarıyla" in str(result.data)
 
 @pytest.mark.asyncio
 async def test_fatura_goster():
     async with Client(mcp) as client:
-        result = await client.call_tool("gib_earsiv_fatura_goster", {"params": {"fatura_uuid": "mock-uuid"}})
+        result = await client.call_tool("gib_earsiv_fatura_goster", {"fatura_uuid": "mock-uuid"})
         assert result.is_error is False
         assert "MOCK FATURA HTML" in str(result.data)
 
 @pytest.mark.asyncio
 async def test_sms_akis():
     async with Client(mcp) as client:
-        r1 = await client.call_tool("gib_earsiv_sms_sorgula", {"params": {"vkn_tckn": "11111111111"}})
+        r1 = await client.call_tool("gib_earsiv_sms_sorgula", {})
         assert "telefon" in str(r1.data)
-        
-        r2 = await client.call_tool("gib_earsiv_sms_gonder", {"params": {"vkn_tckn": "11111111111", "telefon": "5551234567"}})
+
+        r2 = await client.call_tool("gib_earsiv_sms_gonder", {"telefon": "5551234567"})
         assert "oid" in str(r2.data)
-        
-        r3 = await client.call_tool("gib_earsiv_sms_onayla", {"params": {"oid": "mockoid", "sms_kodu": "123456", "fatura_uuid": "mockuuid"}})
+
+        r3 = await client.call_tool("gib_earsiv_sms_onayla", {"oid": "mockoid", "sms_kodu": "123456", "fatura_uuid": "mockuuid"})
         assert "imzalandı" in str(r3.data)
