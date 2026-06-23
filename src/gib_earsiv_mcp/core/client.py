@@ -103,9 +103,17 @@ class GibClient:
                 result = response.json()
             except json.JSONDecodeError:
                 raise GibApiError("Failed to parse JSON response from GIB", response_text=response.text[:200])
-                
-            if isinstance(result, dict) and result.get("error"):
-                raise GibApiError(f"GIB API Error: {result.get('messages', result.get('error'))}", response_text=response.text)
+
+            if isinstance(result, list):
+                for item in result:
+                    if isinstance(item, dict) and item.get("type") == "4":
+                        raise SessionExpiredError("GIB Session expired")
+                raise GibApiError(f"GIB API Error: {result}", response_text=response.text)
+            if isinstance(result, dict):
+                if result.get("type") == "4":
+                    raise SessionExpiredError("GIB Session expired")
+                if result.get("error"):
+                    raise GibApiError(f"GIB API Error: {result.get('messages', result.get('error'))}", response_text=response.text)
                 
             return result
             

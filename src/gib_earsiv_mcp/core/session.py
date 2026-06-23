@@ -5,6 +5,7 @@ from dataclasses import dataclass, field
 from fastmcp import FastMCP
 from .config import settings, GibEnvironment
 from .client import GibClient
+from .exceptions import SessionExpiredError
 from .mock_client import MockGibClient
 
 @dataclass
@@ -14,10 +15,9 @@ class AppState:
     token_store: dict[str, str] = field(default_factory=dict)
 
     async def get_valid_token(self, client_id: str) -> str:
-        token = self.token_store.get(client_id)
-        if not token:
-            token = await self.gib_client.login()
-            self.token_store[client_id] = token
+        self.token_store.pop(client_id, None)
+        token = await self.gib_client.login()
+        self.token_store[client_id] = token
         return token
 
     def clear_token(self, client_id: str):
