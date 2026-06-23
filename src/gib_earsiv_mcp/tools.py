@@ -449,7 +449,7 @@ async def gib_earsiv_fatura_sil(
     state: AppState = ctx.request_context.lifespan_context
     client_id = ctx.client_id or "default"
 
-    delete_item = {"ettn": fatura_uuid}
+    delete_item = {"ettn": fatura_uuid, "aliciVknTckn": alici_vkn_tckn}
     if belge_numarasi:
         delete_item["belgeNumarasi"] = belge_numarasi
     if fatura_tarihi:
@@ -460,8 +460,6 @@ async def gib_earsiv_fatura_sil(
         delete_item["onayDurumu"] = onay_durumu
     if belge_turu:
         delete_item["belgeTuru"] = belge_turu
-    if alici_vkn_tckn:
-        delete_item["aliciVknTckn"] = alici_vkn_tckn
     if alici_unvan_ad_soyad:
         delete_item["aliciUnvanAdSoyad"] = alici_unvan_ad_soyad
 
