@@ -514,6 +514,7 @@ async def gib_earsiv_belge_indir(
         return {
             "filename": f"{ettn}.zip",
             "content_base64": base64.b64encode(file_bytes).decode("utf-8"),
+            "size_bytes": len(file_bytes),
         }
     except SessionExpiredError:
         state.clear_token(client_id)
@@ -704,6 +705,49 @@ async def gib_earsiv_sms_onayla(
         raise
 
 
+async def _html_to_pdf_browser(html: str) -> bytes:
+    from playwright.async_api import async_playwright
+
+    async with async_playwright() as p:
+        browser = await p.chromium.launch(
+            headless=True,
+            args=["--no-sandbox", "--disable-gpu", "--disable-dev-shm-usage"],
+        )
+        try:
+            page = await browser.new_page(viewport={"width": 1280, "height": 1024})
+            await page.set_content(html, wait_until="domcontentloaded", timeout=15000)
+            try:
+                qr_var = await page.evaluate(
+                    "() => !!document.getElementById('qrcode')"
+                )
+                if qr_var:
+                    try:
+                        await page.wait_for_function(
+                            "() => { const el = document.getElementById('qrcode');"
+                            " return el && el.children.length > 0; }",
+                            timeout=5000,
+                        )
+                        await page.wait_for_timeout(500)
+                    except Exception:
+                        pass
+            except Exception:
+                pass
+            pdf_bytes = await page.pdf(
+                format="A4",
+                print_background=True,
+                prefer_css_page_size=True,
+            )
+            return pdf_bytes or b""
+        finally:
+            await browser.close()
+
+
+async def _html_to_pdf_weasyprint(html: str) -> bytes:
+    from weasyprint import HTML
+
+    return HTML(string=html).write_pdf() or b""
+
+
 @mcp.tool(
     name="gib_earsiv_fatura_pdf_indir",
     description="Faturayı PDF formatında indirir (base64 olarak döner).",
@@ -720,10 +764,12 @@ async def gib_earsiv_fatura_pdf_indir(
             description="Faturanın onay durumu (Onaylandı/Onaylanmadı)",
         ),
     ] = "Onaylandı",
+    belge_numarasi: Annotated[
+        str,
+        Field(default="", description="Fatura belge numarası (örn: GIB2026000000000). Verilirse dosya adı olarak kullanılır."),
+    ] = "",
     ctx: Context = None,
 ) -> dict:
-    from weasyprint import HTML
-
     state: AppState = ctx.request_context.lifespan_context
     client_id = ctx.client_id or "default"
 
@@ -736,15 +782,35 @@ async def gib_earsiv_fatura_pdf_indir(
             jp_dict=jp_dict,
             page_name="RG_TASLAKLAR",
         )
-        html = result.get("data", "")
+        if isinstance(result, dict):
+            html = result.get("data", "")
+        elif isinstance(result, str):
+            html = result
+        else:
+            html = ""
+        if isinstance(html, dict):
+            return {"error": "Fatura HTML içeriği alınamadı (beklenmeyen dict response)"}
         if not html:
             return {"error": "Fatura HTML içeriği alınamadı"}
+        html = str(html)
 
-        pdf_bytes = HTML(string=html).write_pdf() or b""
+        browser_error: Exception | None = None
+        try:
+            pdf_bytes = await _html_to_pdf_browser(html)
+        except Exception as e:
+            browser_error = e
+            try:
+                pdf_bytes = await _html_to_pdf_weasyprint(html)
+            except Exception as fallback_error:
+                return {"error": f"PDF oluşturulamadı (browser: {browser_error} | fallback: {fallback_error})"}
         if not pdf_bytes:
-            return {"error": "PDF oluşturulamadı"}
+            detail = f" (browser: {browser_error})" if browser_error else ""
+            return {"error": f"PDF oluşturulamadı{detail}"}
+        dosya_adi = f"{belge_numarasi or fatura_uuid}.pdf"
         return {
-            "filename": f"{fatura_uuid}.pdf",
+            "filename": dosya_adi,
+            "ettn": fatura_uuid,
+            "belge_numarasi": belge_numarasi or "",
             "content_base64": base64.b64encode(pdf_bytes).decode("utf-8"),
             "size_bytes": len(pdf_bytes),
         }
